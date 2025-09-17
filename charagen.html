@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chibi Prompt Generator v2</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200">
+
+    <div class="container mx-auto p-4 sm:p-6 md:p-8">
+        <div class="max-w-4xl mx-auto bg-white dark:bg-gray-800 rounded-2xl shadow-2xl overflow-hidden">
+            <div class="p-6 sm:p-8">
+                <div class="text-center mb-8">
+                    <h1 class="text-3xl sm:text-4xl font-bold text-indigo-600 dark:text-indigo-400">Chibi Prompt Generator v2</h1>
+                    <p class="text-gray-600 dark:text-gray-400 mt-2">Create and copy custom prompts for character generation.</p>
+                </div>
+
+                <!-- Options Grid -->
+                <div id="options-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                    <!-- Options will be dynamically inserted here -->
+                </div>
+
+                <!-- Generated Prompt Section -->
+                <div>
+                    <label for="promptOutput" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Generated Prompt:</label>
+                    <div class="relative">
+                        <textarea id="promptOutput" rows="5" class="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-150" readonly></textarea>
+                        <button id="copyBtn" class="absolute top-2 right-2 p-2 bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500 transition duration-150">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-clipboard" viewBox="0 0 16 16">
+                                <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/>
+                                <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <p id="copy-feedback" class="text-sm text-green-500 mt-1 h-4"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const options = {
+                'Style': ['Classic Chibi', 'Slender Sculpted', '3D Anime Style'],
+                'Gender': ['male', 'female', 'gender-neutral'],
+                'Pose': ['standing', 'sitting', 'waving', 'jumping', 'walking', 'natural relaxed pose', 'dynamic action pose', 'cute peace sign'],
+                'Expression': ['happy', 'smiling', 'sad', 'angry', 'surprised', 'shy', 'neutral', 'content'],
+                'Body Type': ['slim', 'average', 'chubby', 'athletic'],
+                'Accessories': ['none', 'glasses', 'headphones', 'beanie', 'cap', 'scarf'],
+                'Hair Color': ['white', 'black', 'blonde', 'brown', 'red', 'blue', 'pink', 'purple'],
+                'Hair Style': ['messy', 'spiky', 'curly', 'straight', 'bob', 'long', 'short', 'ponytail'],
+                'Eye Color': ['blue', 'brown', 'green', 'black', 'hazel', 'amber', 'purple'],
+                'Skin Tone': ['fair', 'light', 'tan', 'olive', 'dark'],
+                'Top Style': ['crew neck t-shirt', 'hoodie', 'sweater', 'jacket'],
+                'Top Color': ['black', 'white', 'gray', 'red', 'blue', 'green', 'pink'],
+                'Bottom Style': ['jogger pants', 'jeans', 'cargo pants', 'shorts', 'skirt'],
+                'Bottom Color': ['black', 'white', 'gray', 'blue denim', 'khaki'],
+                'Shoe Type': ['sneakers', 'high-tops', 'boots', 'slip-ons'],
+                'Shoe Color': ['white', 'black', 'red', 'blue', 'gray']
+            };
+
+            const optionsGrid = document.getElementById('options-grid');
+            const promptOutput = document.getElementById('promptOutput');
+            const copyBtn = document.getElementById('copyBtn');
+            const copyFeedback = document.getElementById('copy-feedback');
+
+            // 1. Populate the dropdowns
+            function populateSelects() {
+                for (const key in options) {
+                    const div = document.createElement('div');
+                    const label = document.createElement('label');
+                    label.textContent = key;
+                    label.className = 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1';
+                    
+                    const select = document.createElement('select');
+                    select.id = `select-${key.replace(/\s+/g, '-')}`;
+                    select.className = 'w-full p-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-150';
+                    
+                    options[key].forEach(optionValue => {
+                        const option = document.createElement('option');
+                        option.value = optionValue;
+                        option.textContent = optionValue.charAt(0).toUpperCase() + optionValue.slice(1);
+                        select.appendChild(option);
+                    });
+
+                    select.addEventListener('change', generatePrompt);
+                    
+                    div.appendChild(label);
+                    div.appendChild(select);
+                    optionsGrid.appendChild(div);
+                }
+            }
+            
+            // 2. Generate the prompt string
+            function generatePrompt() {
+                const style = document.getElementById('select-Style').value;
+                const character_gender = document.getElementById('select-Gender').value;
+                const pose = document.getElementById('select-Pose').value;
+                const expression = document.getElementById('select-Expression').value;
+                const body_type = document.getElementById('select-Body-Type').value;
+                const accessories = document.getElementById('select-Accessories').value;
+                const hair_color = document.getElementById('select-Hair-Color').value;
+                const hair_style = document.getElementById('select-Hair-Style').value;
+                const eye_color = document.getElementById('select-Eye-Color').value;
+                const skin_color = document.getElementById('select-Skin-Tone').value;
+                const top_style = document.getElementById('select-Top-Style').value;
+                const top_color = document.getElementById('select-Top-Color').value;
+                const bottom_style = document.getElementById('select-Bottom-Style').value;
+                const bottom_color = document.getElementById('select-Bottom-Color').value;
+                const shoe_type = document.getElementById('select-Shoe-Type').value;
+                const shoe_color = document.getElementById('select-Shoe-Color').value;
+
+                let accessories_text = '';
+                if (accessories !== 'none') {
+                    accessories_text = `, wearing ${accessories}`;
+                }
+
+                let prompt = '';
+
+                if (style === 'Slender Sculpted') {
+                    prompt = `Masterpiece, best quality, clean 3D render, claymation style, a ${expression} ${character_gender} character with a ${body_type} build and slender proportions, ${pose}. Detailed sculpted ${hair_color} ${hair_style} hair, large ${eye_color} eyes, small cute nose, faint blush on cheeks, ${skin_color} skin. Wearing a ${top_color} ${top_style}, ${bottom_color} ${bottom_style}, and ${shoe_color} ${shoe_type}${accessories_text}. Soft diffuse studio lighting on a light pastel background. ZBrush, Blender, Octane render, Artstation trending.`;
+                } else if (style === '3D Anime Style') {
+                    prompt = `masterpiece, best quality, 3D render, anime style 3D model, of a ${expression} ${character_gender} character with a ${body_type} build, in a ${pose}. Hyper detailed, sculpted ${hair_color} ${hair_style} hair, large expressive anime ${eye_color} eyes, ${skin_color} skin. Wearing a ${top_color} ${top_style}, ${bottom_color} ${bottom_style}, and ${shoe_color} ${shoe_type}${accessories_text}. Soft studio lighting, vibrant colors, smooth shading, Unreal Engine 5, Octane render, Blender, Artstation trending.`;
+                } else { // Classic Chibi
+                    prompt = `Full body shot, ${expression} ${body_type} ${character_gender} chibi, ${pose}, ultra detailed, hyper realistic, ${hair_color} hair, ${hair_style} hair, ${eye_color} big round eyes, small cute nose, tiny blush, ${skin_color} skin, wearing a ${top_color} ${top_style}, ${bottom_color} ${bottom_style}, and ${shoe_color} ${shoe_type}${accessories_text}. Soft studio lighting, light pastel background, clean render, 3D, blender, octane render, c4d, zbrush, artstation, concept art, pixar.`;
+                }
+                
+                promptOutput.value = prompt;
+            }
+
+            // 3. Copy prompt to clipboard
+            copyBtn.addEventListener('click', () => {
+                promptOutput.select();
+                document.execCommand('copy');
+                copyFeedback.textContent = 'Copied to clipboard!';
+                setTimeout(() => {
+                    copyFeedback.textContent = '';
+                }, 2000);
+            });
+
+            // Initial setup
+            populateSelects();
+            generatePrompt();
+        });
+    </script>
+</body>
+</html>
